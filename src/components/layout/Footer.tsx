@@ -75,21 +75,21 @@ export default function Footer() {
             </h4>
             <div className="flex gap-3">
               <a
-                href="#"
+                href="https://t.me/akramjonov777"
                 aria-label="Telegram"
                 className="glass flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition-colors hover:text-cyan-300"
               >
                 <Send size={16} />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/akramjonov.web?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
                 aria-label="Instagram"
                 className="glass flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition-colors hover:text-cyan-300"
               >
                 <Instagram size={16} />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/akramjonov.web?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
                 aria-label="Facebook"
                 className="glass flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition-colors hover:text-cyan-300"
               >
