@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  /* Dark mode (default) design tokens — space-separated RGB so Tailwind's
+     rgb(var(--x) / <alpha-value>) opacity modifiers work (text-white/70 etc). */
+  --c-fg: 255 255 255; /* foreground text/icons/borders */
+  --c-page: 11 14 30; /* night-900: page background */
+  --c-surface1: 15 19 48; /* night-850: card/surface background */
+  --c-surface2: 20 26 61; /* night-800: secondary surface background */
+}
+
+body.light-mode {
+  color-scheme: light;
+  --c-fg: 15 18 36;
+  --c-page: 244 246 251;
+  --c-surface1: 255 255 255;
+  --c-surface2: 237 240 248;
+}
+
+/* "Chrome" elements (nav, footer, hero, loading screen, admin panel) stay
+   permanently on the dark brand palette regardless of the light/dark toggle —
+   re-declaring the tokens here overrides the body.light-mode cascade for
+   everything nested inside. This keeps neon/glass accents legible while the
+   in-between content sections (routes, drivers, order flow, etc.) genuinely
+   switch to a light theme. */
+.force-dark {
+  color-scheme: dark;
+  --c-fg: 255 255 255;
+  --c-page: 11 14 30;
+  --c-surface1: 15 19 48;
+  --c-surface2: 20 26 61;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #7c3aed #0b0e1e;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: #0b0e1e;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7c3aed, #ec4899);
+  border-radius: 999px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-night-900 text-white font-body antialiased;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+::selection {
+  background: #7c3aed;
+  color: white;
+}
+
+/* Visible keyboard focus everywhere */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+
+  .glass-card {
+    @apply glass rounded-3xl shadow-glass;
+  }
+
+  .gradient-text {
+    @apply bg-brand-gradient bg-clip-text text-transparent bg-200% animate-gradient-shift;
+  }
+
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5
+      font-display font-semibold text-night-950 bg-brand-gradient bg-200%
+      shadow-glow transition-all duration-300 hover:shadow-glow-amber hover:scale-[1.03]
+      active:scale-[0.98] animate-gradient-shift;
+  }
+
+  .btn-secondary {
+    @apply glass inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5
+      font-display font-semibold text-white transition-all duration-300
+      hover:bg-white/10 hover:border-white/25 hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .input-field {
+    @apply w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-white
+      placeholder-white/40 outline-none transition-colors focus:border-violet-400
+      focus:bg-white/10;
+  }
+
+  .section-eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs font-semibold
+      uppercase tracking-[0.2em] text-cyan-300;
+  }
+
+  .animated-border {
+    position: relative;
+    border-radius: 1.5rem;
+  }
+  .animated-border::before {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from var(--angle, 0deg), #7c3aed, #06b6d4, #ec4899, #ffb800, #7c3aed);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: border-spin 4s linear infinite;
+    pointer-events: none;
+  }
+
+  .shimmer-skeleton {
+    @apply relative overflow-hidden bg-white/5 rounded-xl;
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+/* Accent colors (cyan/amber) are tuned bright for dark surfaces. Once the
+   page is switched to light mode, dim them to darker shades of the same hue
+   so text stays legible on light content sections — but restore the original
+   bright shades inside .force-dark zones (nav/hero/footer/admin), which stay
+   dark regardless of the toggle. */
+body.light-mode .text-cyan-300,
+body.light-mode .text-cyan-400 {
+  color: #0e7490;
+}
+body.light-mode .text-amber-300,
+body.light-mode .text-amber-400 {
+  color: #b45309;
+}
+body.light-mode .force-dark .text-cyan-300 {
+  color: #67e8f9;
+}
+body.light-mode .force-dark .text-cyan-400 {
+  color: #22d3ee;
+}
+body.light-mode .force-dark .text-amber-300 {
+  color: #ffd873;
+}
+body.light-mode .force-dark .text-amber-400 {
+  color: #ffc53d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
