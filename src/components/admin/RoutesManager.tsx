@@ -2,31 +2,31 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Clock } from "lucide-react";
 import { useRoutes } from "@/hooks/useRoutes";
-import { api, assetUrl } from "@/lib/api";
+import { api } from "@/lib/api";
 import { Route } from "@/types";
 
 interface FormState {
   nameUz: string;
   nameRu: string;
   nameEn: string;
+  travelTime: string;
   frontSeatPrice: string;
   middleSeatPrice: string;
   backSeatPrice: string;
   parcelPrice: string;
-  image: File | null;
 }
 
 const emptyForm: FormState = {
   nameUz: "",
   nameRu: "",
   nameEn: "",
+  travelTime: "",
   frontSeatPrice: "",
   middleSeatPrice: "",
   backSeatPrice: "",
   parcelPrice: "",
-  image: null,
 };
 
 export default function RoutesManager() {
@@ -53,11 +53,11 @@ export default function RoutesManager() {
       nameUz: route.nameUz,
       nameRu: route.nameRu,
       nameEn: route.nameEn,
+      travelTime: route.travelTime,
       frontSeatPrice: String(route.frontSeatPrice),
       middleSeatPrice: String(route.middleSeatPrice),
       backSeatPrice: String(route.backSeatPrice),
       parcelPrice: String(route.parcelPrice),
-      image: null,
     });
     setError("");
     setModalOpen(true);
@@ -67,20 +67,21 @@ export default function RoutesManager() {
     setSaving(true);
     setError("");
     try {
-      const fd = new FormData();
-      fd.append("nameUz", form.nameUz);
-      fd.append("nameRu", form.nameRu);
-      fd.append("nameEn", form.nameEn);
-      fd.append("frontSeatPrice", form.frontSeatPrice);
-      fd.append("middleSeatPrice", form.middleSeatPrice);
-      fd.append("backSeatPrice", form.backSeatPrice);
-      fd.append("parcelPrice", form.parcelPrice);
-      if (form.image) fd.append("image", form.image);
+      const payload = {
+        nameUz: form.nameUz,
+        nameRu: form.nameRu,
+        nameEn: form.nameEn,
+        travelTime: form.travelTime,
+        frontSeatPrice: form.frontSeatPrice,
+        middleSeatPrice: form.middleSeatPrice,
+        backSeatPrice: form.backSeatPrice,
+        parcelPrice: form.parcelPrice,
+      };
 
       if (editing) {
-        await api.put(`/routes/${editing.id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+        await api.put(`/routes/${editing.id}`, payload);
       } else {
-        await api.post("/routes", fd, { headers: { "Content-Type": "multipart/form-data" } });
+        await api.post("/routes", payload);
       }
       queryClient.invalidateQueries({ queryKey: ["routes"] });
       setModalOpen(false);
@@ -122,13 +123,13 @@ export default function RoutesManager() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {routes?.map((route) => (
           <div key={route.id} className="glass-card overflow-hidden">
-            <div className="h-28 bg-brand-gradient-cool">
-              {route.image && (
-                <img src={assetUrl(route.image)} alt={route.nameUz} className="h-full w-full object-cover" />
-              )}
+            <div className="flex items-center justify-between bg-brand-gradient-cool p-4">
+              <p className="font-display font-bold text-night-950">{route.nameUz}</p>
+              <div className="flex items-center gap-1 text-xs font-medium text-night-950/70">
+                <Clock size={13} /> {route.travelTime || "—"}
+              </div>
             </div>
             <div className="p-4">
-              <p className="font-display font-bold text-white">{route.nameUz}</p>
               <p className="text-xs text-white/50">
                 {route.frontSeatPrice.toLocaleString()} / {route.middleSeatPrice.toLocaleString()} /{" "}
                 {route.backSeatPrice.toLocaleString()}
@@ -188,7 +189,7 @@ export default function RoutesManager() {
 
               <div className="space-y-3">
                 <input
-                  placeholder="Nomi (UZ)"
+                  placeholder="Nomi (UZ) — masalan: Toshkent - Samarqand"
                   value={form.nameUz}
                   onChange={(e) => setForm({ ...form, nameUz: e.target.value })}
                   className="input-field"
@@ -205,6 +206,17 @@ export default function RoutesManager() {
                   onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
                   className="input-field"
                 />
+                <div>
+                  <label className="mb-1.5 flex items-center gap-1.5 text-xs text-white/50">
+                    <Clock size={13} /> Yo'l davomiyligi (masalan: "3 soat 30 daqiqa")
+                  </label>
+                  <input
+                    placeholder="3 soat 30 daqiqa"
+                    value={form.travelTime}
+                    onChange={(e) => setForm({ ...form, travelTime: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="number"
@@ -235,12 +247,6 @@ export default function RoutesManager() {
                     className="input-field"
                   />
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setForm({ ...form, image: e.target.files?.[0] || null })}
-                  className="input-field file:mr-3 file:rounded-full file:border-0 file:bg-brand-gradient file:px-4 file:py-1.5 file:text-xs file:font-semibold file:text-night-950"
-                />
               </div>
 
               <button onClick={handleSave} disabled={saving} className="btn-primary mt-6 w-full">

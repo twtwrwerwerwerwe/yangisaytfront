@@ -1,16 +1,65 @@
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { MapPin, RefreshCw } from "lucide-react";
+import { MapPin, RefreshCw, Clock, ArrowRight } from "lucide-react";
 import { useRoutes } from "@/hooks/useRoutes";
 import { useLocalized } from "@/hooks/useLocalized";
 import { useOrderModalStore } from "@/store/useOrderModalStore";
-import { assetUrl } from "@/lib/api";
+import AutoScrollCarousel from "@/components/common/AutoScrollCarousel";
+import { Route } from "@/types";
+
+function RouteCard({ route }: { route: Route }) {
+  const { t } = useTranslation();
+  const pick = useLocalized();
+  const openOrder = useOrderModalStore((s) => s.open);
+
+  return (
+    <div className="animated-border group relative flex h-full flex-col overflow-hidden rounded-3xl bg-night-850">
+      <div className="relative flex items-center justify-between bg-brand-gradient-cool bg-200% p-5 animate-gradient-shift">
+        <div className="flex items-center gap-2 text-night-950">
+          <MapPin size={18} />
+          <span className="font-display text-base font-bold leading-tight">{pick(route, "name")}</span>
+        </div>
+        <ArrowRight
+          size={18}
+          className="shrink-0 text-night-950/70 transition-transform group-hover:translate-x-1"
+        />
+      </div>
+
+      <div className="flex flex-1 flex-col justify-between space-y-3 p-5">
+        {route.travelTime && (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-cyan-300">
+            <Clock size={14} />
+            {route.travelTime}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2 text-xs text-white/60">
+          <div className="glass rounded-xl px-3 py-2">
+            <p>{t("routesSection.frontSeat")}</p>
+            <p className="font-semibold text-white">
+              {route.frontSeatPrice.toLocaleString()} {t("common.currency")}
+            </p>
+          </div>
+          <div className="glass rounded-xl px-3 py-2">
+            <p>{t("routesSection.backSeat")}</p>
+            <p className="font-semibold text-white">
+              {route.backSeatPrice.toLocaleString()} {t("common.currency")}
+            </p>
+          </div>
+        </div>
+
+        <button onClick={() => openOrder(route.id)} className="btn-primary w-full !py-2.5 text-sm">
+          {t("routesSection.order")}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function RoutesSection() {
   const { t } = useTranslation();
   const { data: routes, isLoading, isError, refetch, isFetching } = useRoutes();
   const pick = useLocalized();
-  const openOrder = useOrderModalStore((s) => s.open);
 
   return (
     <section id="routes" className="relative mx-auto max-w-7xl px-5 py-24 lg:px-8">
@@ -31,7 +80,7 @@ export default function RoutesSection() {
       {isLoading && (
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="shimmer-skeleton h-80 rounded-3xl" />
+            <div key={i} className="shimmer-skeleton h-64 rounded-3xl" />
           ))}
         </div>
       )}
@@ -53,61 +102,40 @@ export default function RoutesSection() {
         <p className="mt-14 text-center text-white/50">{t("routesSection.empty")}</p>
       )}
 
-      <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {routes?.map((route, i) => (
+      {routes && routes.length > 0 && (
+        <>
+          {/* Large screens: static grid, unchanged layout */}
+          <div className="mt-14 hidden gap-6 lg:grid lg:grid-cols-3">
+            {routes.map((route, i) => (
+              <motion.div
+                key={route.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                whileHover={{ y: -8 }}
+              >
+                <RouteCard route={route} />
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Small/medium screens: auto-scrolling, swipeable carousel */}
           <motion.div
-            key={route.id}
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.5, delay: i * 0.08 }}
-            whileHover={{ y: -8 }}
-            className="animated-border group relative overflow-hidden rounded-3xl bg-night-850"
+            transition={{ duration: 0.6 }}
+            className="mt-14 lg:hidden"
           >
-            <div className="relative h-44 overflow-hidden">
-              {route.image ? (
-                <img
-                  src={assetUrl(route.image)}
-                  alt={pick(route, "name")}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
-                />
-              ) : (
-                <div className="h-full w-full bg-brand-gradient-cool" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-night-850 via-night-850/20 to-transparent" />
-              <div className="absolute bottom-3 left-4 flex items-center gap-1.5 text-white">
-                <MapPin size={16} className="text-cyan-300" />
-                <span className="font-display text-lg font-bold">{pick(route, "name")}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 p-5">
-              <div className="grid grid-cols-2 gap-2 text-xs text-white/60">
-                <div className="glass rounded-xl px-3 py-2">
-                  <p>{t("routesSection.frontSeat")}</p>
-                  <p className="font-semibold text-white">
-                    {route.frontSeatPrice.toLocaleString()} {t("common.currency")}
-                  </p>
-                </div>
-                <div className="glass rounded-xl px-3 py-2">
-                  <p>{t("routesSection.backSeat")}</p>
-                  <p className="font-semibold text-white">
-                    {route.backSeatPrice.toLocaleString()} {t("common.currency")}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => openOrder(route.id)}
-                className="btn-primary mt-3 w-full !py-2.5 text-sm"
-              >
-                {t("routesSection.order")}
-              </button>
-            </div>
+            <AutoScrollCarousel direction="left" itemClassName="w-72">
+              {routes.map((route) => (
+                <RouteCard key={route.id} route={route} />
+              ))}
+            </AutoScrollCarousel>
           </motion.div>
-        ))}
-      </div>
+        </>
+      )}
 
       {routes && routes.length > 0 && (
         <div className="mt-14 overflow-hidden">

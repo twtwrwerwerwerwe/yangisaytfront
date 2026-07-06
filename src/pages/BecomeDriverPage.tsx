@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 
-const CARD_NUMBER = "9860 0803 8649 7343";
-const CARD_OWNER = "KHURRIYATXON OHUNJONOVA";
+const CARD_NUMBER = "8600 1234 5678 9012";
+const CARD_OWNER = "AKRAMJONOV SARDOR";
 
 export default function BecomeDriverPage() {
   const { t } = useTranslation();

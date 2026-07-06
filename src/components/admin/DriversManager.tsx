@@ -2,20 +2,22 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Star } from "lucide-react";
 import { useDrivers } from "@/hooks/useDrivers";
 import { api, assetUrl } from "@/lib/api";
 import { Driver } from "@/types";
+import StarRatingInput from "./StarRatingInput";
 
 interface FormState {
   fullName: string;
   carName: string;
   experience: string;
   phone: string;
+  rating: number;
   photo: File | null;
 }
 
-const emptyForm: FormState = { fullName: "", carName: "", experience: "", phone: "", photo: null };
+const emptyForm: FormState = { fullName: "", carName: "", experience: "", phone: "", rating: 5, photo: null };
 
 export default function DriversManager() {
   const { t } = useTranslation();
@@ -42,6 +44,7 @@ export default function DriversManager() {
       carName: driver.carName,
       experience: String(driver.experience),
       phone: driver.phone,
+      rating: driver.rating,
       photo: null,
     });
     setError("");
@@ -57,6 +60,7 @@ export default function DriversManager() {
       fd.append("carName", form.carName);
       fd.append("experience", form.experience);
       fd.append("phone", form.phone);
+      fd.append("rating", String(form.rating));
       if (form.photo) fd.append("photo", form.photo);
 
       if (editing) {
@@ -111,6 +115,16 @@ export default function DriversManager() {
             </div>
             <p className="mt-3 font-display text-sm font-bold text-white">{driver.fullName}</p>
             <p className="text-xs text-white/50">{driver.carName}</p>
+            <div className="mt-1.5 flex items-center justify-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star
+                  key={s}
+                  size={12}
+                  className={s <= driver.rating ? "text-amber-400" : "text-white/20"}
+                  fill={s <= driver.rating ? "currentColor" : "none"}
+                />
+              ))}
+            </div>
             <div className="mt-3 flex gap-2">
               <button onClick={() => openEdit(driver)} className="btn-secondary flex-1 !py-1.5 text-xs">
                 <Pencil size={13} />
@@ -189,6 +203,13 @@ export default function DriversManager() {
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="input-field"
                 />
+                <div>
+                  <label className="mb-1.5 block text-xs text-white/50">Baho (yulduzlar)</label>
+                  <StarRatingInput
+                    value={form.rating}
+                    onChange={(rating) => setForm({ ...form, rating })}
+                  />
+                </div>
                 <input
                   type="file"
                   accept="image/*"

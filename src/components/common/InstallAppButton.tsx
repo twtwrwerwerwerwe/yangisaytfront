@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Share, SquarePlus, X, Smartphone } from "lucide-react";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
+import { Download, Share, SquarePlus, X, Smartphone, Sparkles } from "lucide-react";
+import {
+  getDeferredPrompt,
+  clearDeferredPrompt,
+  isAppInstalled,
+  onInstallPromptAvailable,
+  BeforeInstallPromptEvent,
+} from "@/lib/pwaInstall";
 
 function isIos() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
@@ -19,31 +21,32 @@ function isStandalone() {
 }
 
 export default function InstallAppButton() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosSheet, setShowIosSheet] = useState(false);
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (isStandalone()) return;
+    if (isStandalone() || isAppInstalled()) return;
 
-    // Android / desktop Chrome & Edge fire this when the app is installable
-    function handleBeforeInstall(e: Event) {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setVisible(true);
+    // Covers the case where beforeinstallprompt already fired before this
+    // component mounted (e.g. during the loading screen).
+    if (getDeferredPrompt()) setVisible(true);
+
+    // Covers the case where it fires later, after mount.
+    const unsubscribe = onInstallPromptAvailable(() => setVisible(true));
+
+    // iOS Safari never fires beforeinstallprompt — show our own button anyway.
+    if (isIos()) setVisible(true);
+
+    function handleInstalled() {
+      setVisible(false);
     }
+    window.addEventListener("appinstalled", handleInstalled);
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-
-    // iOS Safari never fires beforeinstallprompt — show our own instructions instead
-    if (isIos()) {
-      setVisible(true);
-    }
-
-    window.addEventListener("appinstalled", () => setVisible(false));
-
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    return () => {
+      unsubscribe();
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
   }, []);
 
   async function handleClick() {
@@ -51,46 +54,58 @@ export default function InstallAppButton() {
       setShowIosSheet(true);
       return;
     }
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    const prompt = getDeferredPrompt();
+    if (!prompt) return;
+    await (prompt as BeforeInstallPromptEvent).prompt();
+    const { outcome } = await (prompt as BeforeInstallPromptEvent).userChoice;
     if (outcome === "accepted") setVisible(false);
-    setDeferredPrompt(null);
+    clearDeferredPrompt();
   }
 
   if (!visible || dismissed) return null;
 
   return (
     <>
-      <motion.button
+      <motion.div
         initial={{ opacity: 0, scale: 0.5, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={handleClick}
-        className="fixed bottom-6 left-6 z-40 flex items-center gap-2 rounded-full bg-brand-gradient bg-200% px-4 py-3 text-sm font-display font-semibold text-night-950 shadow-glow animate-gradient-shift sm:px-5"
+        className="fixed bottom-6 left-6 z-40"
       >
-        <motion.span
-          animate={{ y: [0, -3, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-          className="flex"
+        <motion.div
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+          className="animated-border relative rounded-full"
         >
-          <Download size={17} />
-        </motion.span>
-        <span className="hidden sm:inline">Ilovani yuklab oling</span>
-        <span
-          role="button"
-          tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
-            setDismissed(true);
-          }}
-          className="ml-1 rounded-full p-0.5 hover:bg-night-950/10"
-          aria-label="Yopish"
-        >
-          <X size={13} />
-        </span>
-      </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleClick}
+            className="relative flex items-center gap-2.5 overflow-hidden rounded-full bg-night-900 px-5 py-3.5 text-sm font-display font-semibold text-white shadow-glow"
+          >
+            <span className="absolute inset-0 bg-brand-gradient bg-200% opacity-90 animate-gradient-shift" />
+            <motion.span
+              animate={{ rotate: [0, -10, 10, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="relative flex text-night-950"
+            >
+              <Download size={18} strokeWidth={2.5} />
+            </motion.span>
+            <span className="relative text-night-950">Ilovani yuklab oling</span>
+            <Sparkles size={13} className="relative text-night-950/60" />
+          </motion.button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setDismissed(true);
+            }}
+            className="glass absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full text-white/70 hover:text-white"
+            aria-label="Yopish"
+          >
+            <X size={12} />
+          </button>
+        </motion.div>
+      </motion.div>
 
       {/* iOS instructions sheet */}
       <AnimatePresence>
@@ -108,7 +123,7 @@ export default function InstallAppButton() {
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: "spring", damping: 26, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="glass-card w-full max-w-sm p-6 sm:mb-0"
+              className="animated-border w-full max-w-sm rounded-3xl bg-night-900 p-6 sm:mb-0"
             >
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">

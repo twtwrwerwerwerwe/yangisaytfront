@@ -143,6 +143,14 @@ textarea:focus-visible {
     background-size: 200% 100%;
     animation: shimmer 1.6s linear infinite;
   }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Accent colors (cyan/amber) are tuned bright for dark surfaces. Once the

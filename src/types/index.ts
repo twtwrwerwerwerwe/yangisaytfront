@@ -18,7 +18,7 @@ export interface Route {
   nameUz: string;
   nameRu: string;
   nameEn: string;
-  image: string;
+  travelTime: string;
   frontSeatPrice: number;
   middleSeatPrice: number;
   backSeatPrice: number;
@@ -34,6 +34,7 @@ export interface Driver {
   carName: string;
   experience: number;
   phone: string;
+  rating: number;
   isActive: boolean;
   createdAt: string;
 }
