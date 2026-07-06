@@ -18,8 +18,8 @@ if (import.meta.env.PROD && !API_ORIGIN) {
 }
 
 export const api = axios.create({
-    baseURL: API_ORIGIN,
-    timeout: 30000,
+  baseURL: `${API_ORIGIN}/api`,
+  timeout: 30000,
 });
 
 api.interceptors.request.use((config) => {
